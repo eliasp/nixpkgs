@@ -3251,6 +3251,8 @@ with pkgs;
 
   ignition = recurseIntoAttrs {
 
+    coreos = callPackage ../tools/virtualization/ignition {};
+
     math = callPackage ../development/libraries/ignition-math { };
 
     math2 = ignition.math;
