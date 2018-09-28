@@ -707,13 +707,6 @@ in
             ''}
             mkdir -m 0700 -p ${mainCfg.logDir}
 
-            # Get rid of old semaphores.  These tend to accumulate across
-            # server restarts, eventually preventing it from restarting
-            # successfully.
-            for i in $(${pkgs.utillinux}/bin/ipcs -s | grep ' ${mainCfg.user} ' | cut -f2 -d ' '); do
-                ${pkgs.utillinux}/bin/ipcrm -s $i
-            done
-
             # Run the startup hooks for the subservices.
             for i in ${toString (map (svn: svn.startupScript) allSubservices)}; do
                 echo Running Apache startup hook $i...
@@ -726,6 +719,7 @@ in
         serviceConfig.ExecReload = "${httpd}/bin/httpd -f ${httpdConf} -k graceful";
         serviceConfig.Type = "forking";
         serviceConfig.PIDFile = "${mainCfg.stateDir}/httpd.pid";
+        serviceConfig.RemoveIPC = "yes";
         serviceConfig.Restart = "always";
         serviceConfig.RestartSec = "5s";
       };
