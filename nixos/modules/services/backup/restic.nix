@@ -239,6 +239,7 @@ in
           } // optionalAttrs (backup.rcloneConfig != null) (mapAttrs' (name: value:
             nameValuePair (rcloneAttrToConf name) (toRcloneVal value)
           ) backup.rcloneConfig);
+	  # TODO: only pull pkgs.openssh in, when the repo-type requires it
           path = [ pkgs.openssh ];
           restartIfChanged = false;
           serviceConfig = {
@@ -248,6 +249,8 @@ in
             RuntimeDirectory = "restic-backups-${name}";
             CacheDirectory = "restic-backups-${name}";
             CacheDirectoryMode = "0700";
+	    # FIXME: tests fail currently, despite their paths being changed from /tmp to /var/tmp
+	    PrivateTmp = "yes";
           } // optionalAttrs (backup.s3CredentialsFile != null) {
             EnvironmentFile = backup.s3CredentialsFile;
           };
