@@ -1,5 +1,5 @@
 {
-  mkDerivation, lib,
+  mkDerivation, lib, fetchpatch,
   extra-cmake-modules, kdoctools,
 
   boost, fontconfig, ibus, libXcursor, libXft, libcanberra_kde, libpulseaudio,
@@ -33,6 +33,11 @@ mkDerivation {
   patches = [
     ./hwclock-path.patch
     ./tzdir.patch
+    # https://bugs.kde.org/show_bug.cgi?id=431923 (Keeping arrow keys pressed does nothing)
+    (fetchpatch {
+      url = "https://invent.kde.org/plasma/plasma-desktop/commit/5550af1fd10dccda80be4586f19e3aa0995be2bc.patch";
+      sha256 = "0virc28ab1kf8rh93ql7pjpxh54jm8kn67w7myyfrhq16pns8sr4";
+    })
   ];
   postPatch = ''
     sed '1i#include <cmath>' -i kcms/touchpad/backends/x11/synapticstouchpad.cpp
