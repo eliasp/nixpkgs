@@ -90,6 +90,8 @@ in (kdeFrameworks // plasma5 // plasma5.thirdParty // kdeGear // qt5 // {
 
   kimageannotator = callPackage ../development/libraries/kimageannotator { };
 
+  kirigami-addons = callPackage ../development/libraries/kirigami-addons { };
+
   kproperty = callPackage ../development/libraries/kproperty { };
 
   kpeoplevcard = callPackage ../development/libraries/kpeoplevcard { };

@@ -25483,6 +25483,8 @@ with pkgs;
 
   kail = callPackage ../tools/networking/kail {  };
 
+  kalendar = libsForQt5.callPackage ../applications/office/kalendar { };
+
   kanboard = callPackage ../applications/misc/kanboard { };
 
   kapitonov-plugins-pack = callPackage ../applications/audio/kapitonov-plugins-pack { };
