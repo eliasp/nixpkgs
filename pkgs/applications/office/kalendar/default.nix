@@ -31,8 +31,8 @@ mkDerivation rec {
     domain = "invent.kde.org";
     owner = "pim";
     repo = pname;
-    rev = "f0bdb6917da155efdc8260e88ab21cac838a3443";
-    sha256 = "0wj9h5bfq5lbgg8pi8ys64d8n8icjmlxbhns4v7m3z35z73iza7y";
+    rev = "ffc43371fe326f51258d23d27fc64dd333532e71";
+    sha256 = "0df0s2aff72am37zkffhv9wy9bymyjd0431fhyrb0s6626619jc5";
   };
 
   nativeBuildInputs = [
