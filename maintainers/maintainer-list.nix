@@ -15971,4 +15971,10 @@
     github = "wuyoli";
     githubId = 104238274;
   };
+  eliandoran = {
+    email = "contact@eliandoran.me";
+    name = "Elian Doran";
+    github = "eliandoran";
+    githubId = 21236836;
+  };
 }
