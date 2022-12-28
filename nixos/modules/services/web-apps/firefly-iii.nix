@@ -354,53 +354,49 @@ in {
     # Set-up script
     environment.systemPackages = [ artisan ];
 
-    systemd.services.firefly-iii-setup = {
-      description = "Preparation tasks for Firefly III";
-      before = [ "phpfpm-firefly-iii.service" ];
-      after = optional db.createLocally "mysql.service";
-      wantedBy = [ "multi-user.target" ];
+    systemd.services.phpfpm-firefly-iii = {
       serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
         User = user;
+        LoadCredential = "appkey:${cfg.appKeyFile}";
         WorkingDirectory = "${firefly-iii}";
+        ExecStartPre =
+          let
+            isSecret  = v: isAttrs v && v ? _secret && (isString v._secret || builtins.isPath v._secret);
+            fireflyEnvVars = generators.toKeyValue {
+              mkKeyValue = flip generators.mkKeyValueDefault "=" {
+                mkValueString = v: with builtins;
+                  if isInt         v then toString v
+                  else if isString v then v
+                  else if true  == v then "true"
+                  else if false == v then "false"
+                  else if isSecret v then hashString "sha256" v._secret
+                  else throw "unsupported type ${typeOf v}: ${(generators.toPretty {}) v}";
+              };
+            };
+            secretPaths = mapAttrsToList (_: v: v._secret) (filterAttrs (_: isSecret) cfg.config);
+            mkSecretReplacement = file: ''
+              replace-secret ${escapeShellArgs [ (builtins.hashString "sha256" file) file "${cfg.dataDir}/.env" ]}
+            '';
+            secretReplacements = concatMapStrings mkSecretReplacement secretPaths;
+            filteredConfig = converge (filterAttrsRecursive (_: v: ! elem v [ {} null ])) cfg.config;
+            fireflyEnv = pkgs.writeText "firefly-iii.env" (fireflyEnvVars filteredConfig);
+            preScript = pkgs.writers.writeBashBin "firefly-iii-StartPre" ''
+              set -euo pipefail
+              umask 077
+
+              # create the .env file
+              install -T -m 0600 -o ${user} ${fireflyEnv} "${cfg.dataDir}/.env"
+              ${secretReplacements}
+              if ! grep 'APP_KEY=base64:' "${cfg.dataDir}/.env" >/dev/null; then
+                  sed -i 's/APP_KEY=/APP_KEY=base64:/' "${cfg.dataDir}/.env"
+              fi
+
+              # migrate db
+              ${pkgs.php}/bin/php artisan migrate --force
+            '';
+          in "${preScript}/bin/firefly-iii-StartPre";
       };
       path = [ pkgs.replace-secret ];
-      script =
-        let
-          isSecret  = v: isAttrs v && v ? _secret && (isString v._secret || builtins.isPath v._secret);
-          fireflyEnvVars = generators.toKeyValue {
-            mkKeyValue = flip generators.mkKeyValueDefault "=" {
-              mkValueString = v: with builtins;
-                if isInt         v then toString v
-                else if isString v then v
-                else if true  == v then "true"
-                else if false == v then "false"
-                else if isSecret v then hashString "sha256" v._secret
-                else throw "unsupported type ${typeOf v}: ${(generators.toPretty {}) v}";
-            };
-          };
-          secretPaths = mapAttrsToList (_: v: v._secret) (filterAttrs (_: isSecret) cfg.config);
-          mkSecretReplacement = file: ''
-            replace-secret ${escapeShellArgs [ (builtins.hashString "sha256" file) file "${cfg.dataDir}/.env" ]}
-          '';
-          secretReplacements = concatMapStrings mkSecretReplacement secretPaths;
-          filteredConfig = converge (filterAttrsRecursive (_: v: ! elem v [ {} null ])) cfg.config;
-          fireflyEnv = pkgs.writeText "firefly-iii.env" (fireflyEnvVars filteredConfig);
-      in ''
-        set -euo pipefail
-        umask 077
-
-        # create the .env file
-        install -T -m 0600 -o ${user} ${fireflyEnv} "${cfg.dataDir}/.env"
-        ${secretReplacements}
-        if ! grep 'APP_KEY=base64:' "${cfg.dataDir}/.env" >/dev/null; then
-            sed -i 's/APP_KEY=/APP_KEY=base64:/' "${cfg.dataDir}/.env"
-        fi
-
-        # migrate db
-        ${pkgs.php}/bin/php artisan migrate --force
-      '';
     };
 
     # Data dir
