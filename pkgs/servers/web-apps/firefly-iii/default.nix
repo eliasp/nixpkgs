@@ -24,6 +24,7 @@ in
       rev = version;
       sha256 = "sha256-p3JmLkaHMJqH11OblUXH5/ULFa3sBEzsdNU8nBg6EnY=";
     };
+    patches = [ ./pgsql-db-socket-support.patch ];
 
     meta = with lib; {
       description = "A free and open source personal finance manager";

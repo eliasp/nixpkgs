@@ -1,0 +1,25 @@
+From 9fee69d3a4637bf704312f20be138dd4769cbbd5 Mon Sep 17 00:00:00 2001
+From: Elias Probst <mail@eliasprobst.eu>
+Date: Thu, 5 Jan 2023 00:40:08 +0100
+Subject: [PATCH] config: add `DB_SOCKET` support for pgsql
+
+Signed-off-by: Elias Probst <mail@eliasprobst.eu>
+---
+ config/database.php | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/config/database.php b/config/database.php
+index da13fb056..dde38da61 100644
+--- a/config/database.php
++++ b/config/database.php
+@@ -107,6 +107,7 @@ return [
+             'database'    => envNonEmpty('DB_DATABASE', $database),
+             'username'    => envNonEmpty('DB_USERNAME', $username),
+             'password'    => env('DB_PASSWORD', $password),
++            'unix_socket' => env('DB_SOCKET', ''),
+             'charset'     => 'utf8',
+             'prefix'      => '',
+             'search_path' => envNonEmpty('PGSQL_SCHEMA', 'public'),
+-- 
+2.38.1
+
