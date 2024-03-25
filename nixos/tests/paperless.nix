@@ -25,10 +25,53 @@ import ./make-test-python.nix ({ lib, ... }: {
         PAPERLESS_DBHOST = "/run/postgresql";
       };
     };
+    # ensure configuring a subpath for paperless works
+    # see also:
+    # - https://github.com/NixOS/nixpkgs/issues/298719
+    # - https://github.com/paperless-ngx/paperless-ngx/issues/5494
+    subpath = { config, pkgs, ...}: {
+      imports = [ self.simple ];
+      services.paperless.settings = {
+        PAPERLESS_STATIC_URL = "/paperless/static/";
+        PAPERLESS_FORCE_SCRIPT_NAME = "/paperless";
+      };
+      services.caddy = {
+        enable = true;
+        virtualHosts."http://localhost".extraConfig = ''
+          redir /paperless /paperless/ permanent
+          handle /paperless/* {
+            reverse_proxy localhost:28981
+          }
+        '';
+      };
+      environment.systemPackages = [
+        pkgs.curl
+      ];
+    };
   }; in self;
 
   testScript = ''
     import json
+
+    def test_paperless_subpath(node):
+      node.wait_for_unit("paperless-web.service")
+      node.wait_for_unit("caddy.service")
+      node.wait_until_succeeds("curl -fs http://localhost:28981")
+      node.wait_until_succeeds("curl -fs http://localhost:80")
+
+      with subtest("Try to request the login page. It should not result in an endless redirect, but return HTTP/200 instead."):
+        node.succeed("""
+          request_expect="200"
+          request_result="$(curl -L -s -o /dev/null -w '%{http_code}' http://localhost/paperless)"
+          test "$request_expect" -eq "$request_result" || ( echo -e "\nexpected: $request_expect\ngot:      $request_result" 1>&2 && false )
+        """)
+
+      with subtest("Try to request the login page. It should redirect to '/paperless/accounts/login/?next=/paperless/'."):
+        print(node.succeed("""
+          request_expect="http://localhost/paperless/accounts/login/?next=/paperless/"
+          request_result="$(curl -L -s -o /dev/null -w '%{url_effective}' http://localhost/paperless)"
+          test "$request_expect" = "$request_result" || ( echo -e "\nexpected: $request_expect\ngot:      $request_result" 1>&2 && false )
+        """))
 
     def test_paperless(node):
       node.wait_for_unit("paperless-consumer.service")
@@ -85,5 +128,10 @@ import ./make-test-python.nix ({ lib, ... }: {
     simple.send_monitor_command("quit")
     simple.wait_for_shutdown()
     test_paperless(postgres)
+    postgres.send_monitor_command("quit")
+    postgres.wait_for_shutdown()
+    test_paperless_subpath(subpath)
+    subpath.send_monitor_command("quit")
+    subpath.wait_for_shutdown()
   '';
 })
