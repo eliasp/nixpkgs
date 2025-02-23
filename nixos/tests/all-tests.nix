@@ -1101,6 +1101,7 @@ in {
   systemd-journal = handleTest ./systemd-journal.nix {};
   systemd-journal-gateway = handleTest ./systemd-journal-gateway.nix {};
   systemd-journal-upload = handleTest ./systemd-journal-upload.nix {};
+  systemd-localectl = runTest ./systemd-localectl.nix;
   systemd-lock-handler = runTestOn ["aarch64-linux" "x86_64-linux"] ./systemd-lock-handler.nix;
   systemd-machinectl = handleTest ./systemd-machinectl.nix {};
   systemd-networkd = handleTest ./systemd-networkd.nix {};

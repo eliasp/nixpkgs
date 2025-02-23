@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Elias Probst <mail@eliasprobst.eu>
+Date: Sun, 23 Feb 2025 22:14:14 +0100
+Subject: [PATCH] localectl: compile-time defined `locale-archive` path
+
+---
+ meson.build             | 5 +++++
+ meson_options.txt       | 2 ++
+ src/basic/locale-util.c | 2 +-
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index cb5dcec0f9..fee6ce7e83 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1008,6 +1008,11 @@ if localegen_path != ''
+ endif
+ conf.set10('HAVE_LOCALEGEN', localegen_path != '')
+ 
++localearchive_path = get_option('localearchive-path')
++if localearchive_path != ''
++        conf.set_quoted('LOCALEARCHIVE_PATH', localearchive_path)
++endif
++
+ conf.set_quoted('GETTEXT_PACKAGE', meson.project_name())
+ 
+ service_watchdog = get_option('service-watchdog')
+diff --git a/meson_options.txt b/meson_options.txt
+index 78ec25bfa3..d21e93ae0a 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -342,6 +342,8 @@ option('default-keymap', type : 'string', value : 'us',
+        description : 'default keymap used when populating /etc/vconsole.conf')
+ option('localegen-path', type : 'string', value : '',
+        description : 'absolute path to the locale-gen binary in case the system is using locale-gen')
++option('localearchive-path', type : 'string', value : '/usr/lib/locale/locale-archive',
++       description : 'absolute path to the locale-archive used at runtime by localed/localectl')
+ option('service-watchdog', type : 'string', value : '3min',
+        description : 'default watchdog setting for systemd services')
+ 
+diff --git a/src/basic/locale-util.c b/src/basic/locale-util.c
+index 23565273dd..b82c36a29c 100644
+--- a/src/basic/locale-util.c
++++ b/src/basic/locale-util.c
+@@ -101,7 +101,7 @@ static int add_locales_from_archive(Set *locales) {
+         struct stat st;
+         int r;
+ 
+-        fd = open("/usr/lib/locale/locale-archive", O_RDONLY|O_NOCTTY|O_CLOEXEC);
++        fd = open(LOCALEARCHIVE_PATH, O_RDONLY|O_NOCTTY|O_CLOEXEC);
+         if (fd < 0)
+                 return errno == ENOENT ? 0 : -errno;
+ 

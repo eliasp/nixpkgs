@@ -247,6 +247,7 @@ stdenv.mkDerivation (finalAttrs: {
       ./0016-systemctl-edit-suggest-systemdctl-edit-runtime-on-sy.patch
       ./0017-meson.build-do-not-create-systemdstatedir.patch
       ./0018-Revert-bootctl-update-list-remove-all-instances-of-s.patch # https://github.com/systemd/systemd/issues/33392
+      ./0020-localectl-compile-time-defined-locale-archive-path.patch
     ]
     ++ lib.optionals (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isGnu) [
       ./0019-timesyncd-disable-NSCD-when-DNSSEC-validation-is-dis.patch
@@ -766,6 +767,9 @@ stdenv.mkDerivation (finalAttrs: {
 
   env.NIX_CFLAGS_COMPILE = toString (
     [
+      "-ULOCALEARCHIVE_PATH"
+      "-DLOCALEARCHIVE_PATH=\"/run/current-system/sw/lib/locale/locale-archive\""
+
       # Can't say ${polkit.bin}/bin/pkttyagent here because that would
       # lead to a cyclic dependency.
       "-UPOLKIT_AGENT_BINARY_PATH"
