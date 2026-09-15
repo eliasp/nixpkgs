@@ -108,6 +108,9 @@ in
         default = false;
         description = ''
           Whether to run in recovery mode, serving the web UI on `services.stalwart.recovery.port`.
+
+          See the Stalwart documentation section "[Recovery mode](https://stalw.art/docs/configuration/recovery-mode/)"
+          for details.
         '';
       };
       port = lib.mkOption {
