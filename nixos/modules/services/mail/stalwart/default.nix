@@ -141,17 +141,18 @@ in
       username = lib.mkOption {
         type = lib.types.str;
         description = ''
-          The username of the fallback administrator.
+          The username of the fallback administrator used with {option}`recovery.enable`.
+
+          For providing the user's password, a credential with an identifier matching the value of {option}`admin.username`
+          is required.
+
+          For it to be automatically used, it can be provided through one of systemd's lookup locations for systemd-credentials,
+          e.g. by creating the file `/run/credstore/recovery_admin`, containing the user's plain-text password.
+          See {manpage}`systemd.exec(5)` (section "CREDENTIALS") and {option}`credentials` for details.
+          Alternatively, configure the corresponding credential with a custom source path explicitly via {option}`credentials`
+          and ensure its key matches {option}`username`.
         '';
-        example = "admin";
-      };
-      passwordFile = lib.mkOption {
-        type = lib.types.path;
-        description = ''
-          Path to a file containing the password for the fallback administrator.
-          Make sure this password is secure, as this administrator account is active even outside of bootstrap/recovery mode.
-        '';
-        example = "/run/secrets/stalwart-admin-password";
+        example = "recovery_admin";
       };
     };
 
@@ -169,15 +170,18 @@ in
 
     credentials = lib.mkOption {
       description = ''
-        Credentials envs used to configure Stalwart secrets.
+        Systemd credentials used to configure Stalwart secrets.
+
         These secrets can be accessed in configuration values with
         macros such as `%{file:/run/credentials/stalwart.service/VAR_NAME}%` on 0.15.x,
         or `filePath` in `"@type" = "File"` secrets on 0.16+.
+
+        See {manpage}`systemd.exec(5)` (section "CREDENTIALS") for details.
       '';
       type = lib.types.attrsOf lib.types.str;
       default = { };
       example = {
-        user_admin_password = "/run/keys/stalwart_admin_password";
+        recovery_admin = "/run/credstore/stalwart.recovery_admin_password";
       };
     };
 
@@ -192,13 +196,6 @@ in
       {
         assertion = cfg.admin.enable -> since0_16;
         message = "<option>services.stalwart.admin.enable</option> requires <option>services.stalwart.package</option> to be at least version 0.16";
-      }
-      {
-        assertion = cfg.admin.enable -> !lib.isStorePath cfg.admin.passwordFile;
-        message = ''
-          <option>services.stalwart.admin.passwordFile</option> points to a file in the Nix store.
-          You should use a quoted absolute path to prevent this.
-        '';
       }
       {
         assertion =
@@ -335,7 +332,7 @@ in
               '';
           ExecStart =
             let
-              stalwartEnv = lib.optionalString cfg.admin.enable "STALWART_RECOVERY_ADMIN=${lib.escapeShellArg cfg.admin.username}:`cat ${lib.escapeShellArg cfg.admin.passwordFile}`";
+              stalwartEnv = lib.optionalString cfg.admin.enable "STALWART_RECOVERY_ADMIN=${lib.escapeShellArg cfg.admin.username}:`systemd-creds cat ${lib.escapeShellArg cfg.admin.username}`";
               stalwartCmd = "${lib.getExe cfg.package} --config=${configFile}";
               cmd = lib.optionalString cfg.recovery.enable "${stalwartEnv} ${stalwartCmd}";
             in
@@ -353,7 +350,13 @@ in
               "STALWART_RECOVERY_MODE_PORT=${toString cfg.recovery.port}"
           ];
           EnvironmentFile = lib.optional (cfg.environmentFile != null) cfg.environmentFile;
-          LoadCredential = lib.mapAttrsToList (key: value: "${key}:${value}") cfg.credentials;
+          LoadCredential =
+            let
+              # default credentials for the admin user, might be overridden by an explicitly configured
+              # cred in cfg.credentials
+              adminCreds = lib.optionalAttrs cfg.admin.enable { "${cfg.admin.username}" = cfg.admin.username; };
+            in
+          lib.mapAttrsToList (key: value: "${key}:${value}") ( adminCreds // cfg.credentials );
 
           ReadWritePaths = [
             cfg.dataDir

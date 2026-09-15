@@ -17,7 +17,6 @@ To enable Stalwart, add the following to your {file}`configuration.nix`:
     admin = {
       enable = true;
       username = "admin";
-      passwordFile = "/run/secrets/stalwart-admin-password";
     };
     url = "https://mail.example.com/";
     stateVersion = "26.11";
