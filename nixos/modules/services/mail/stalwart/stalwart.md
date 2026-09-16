@@ -60,7 +60,6 @@ To enable recovery mode:
 {
   services.stalwart.recovery = {
     enable = true;
-    port = 8080;
   };
 }
 ```

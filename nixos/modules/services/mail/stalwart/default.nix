@@ -115,6 +115,7 @@ in
       };
       port = lib.mkOption {
         type = lib.types.port;
+        default = 8080;
         description = ''
           The port to serve the web UI on in bootstrap/recovery mode.
         '';
