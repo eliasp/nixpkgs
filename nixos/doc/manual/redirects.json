@@ -149,6 +149,9 @@
   "module-services-stalwart-provision": [
     "index.html#module-services-stalwart-provision"
   ],
+  "module-services-stalwart-bootstrap": [
+    "index.html#module-services-stalwart-bootstrap"
+  ],
   "module-services-stalwart-proxying": [
     "index.html#module-services-stalwart-proxying"
   ],

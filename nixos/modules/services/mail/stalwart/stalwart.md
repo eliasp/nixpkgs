@@ -207,6 +207,11 @@ Consider {option}`services.stalwart.provision.objects.<name>.scope` if you need 
 
 A list of every object/singleton and their properties may be found [here](https://stalw.art/docs/ref/).
 
+## Bootstrap Mode {#module-services-stalwart-bootstrap}
+
+Due to the mutable nature of the bootstrap mode, this mode isn't supported on NixOS.
+Please follow the instructions above of one of the other available modes to setup & configure Stalwart.
+
 ### Proxying {#module-services-stalwart-proxying}
 
 If Stalwart is running begind a reverse proxy like Nginx or Caddy, ensure that the proxy is configured to set the `X-Forwarded-For` header to the correct value, and configure Stalwart to accept that:
