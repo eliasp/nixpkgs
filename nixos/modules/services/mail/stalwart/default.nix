@@ -119,6 +119,15 @@ in
           The port to serve the web UI on in bootstrap/recovery mode.
         '';
       };
+      logLevel = lib.mkOption {
+        type = lib.types.enum [ "error" "warn" "info" "debug" "trace" ];
+        default = "info";
+        description = ''
+          The log level to be used in recovery mode.
+
+          See the Stalwart documentation on "[TracingLevel](https://stalw.art/docs/ref/object/log/#tracinglevel)" for details.
+        '';
+      };
     };
 
     admin = {
@@ -340,6 +349,7 @@ in
             ]
             ++ lib.optionals cfg.recovery.enable [
               "STALWART_RECOVERY_MODE=${toString cfg.recovery.enable}"
+              "STALWART_RECOVERY_MODE_LOG_LEVEL=${cfg.recovery.logLevel}"
               "STALWART_RECOVERY_MODE_PORT=${toString cfg.recovery.port}"
           ];
           EnvironmentFile = lib.optional (cfg.environmentFile != null) cfg.environmentFile;
