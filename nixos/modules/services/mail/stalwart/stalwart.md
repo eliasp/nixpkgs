@@ -214,14 +214,14 @@ Please follow the instructions above of one of the other available modes to setu
 
 ### Proxying {#module-services-stalwart-proxying}
 
-If Stalwart is running begind a reverse proxy like Nginx or Caddy, ensure that the proxy is configured to set the `X-Forwarded-For` header to the correct value, and configure Stalwart to accept that:
+If Stalwart is running behind a reverse proxy like Nginx or Caddy, ensure that the proxy is configured to set the `X-Forwarded-For` header to the correct value, and configure Stalwart to accept that:
 `services.stalwart.provision.singletons.Http.useXForwarded = true;`
 
 Nginx
 : `services.nginx.recommendedProxySettings = true;`
 
 Caddy
-: Caddy's reverse proxy automatically sets X-Forwarded-For`
+: Caddy's reverse proxy automatically sets `X-Forwarded-For`
 
 ## Upgrading from 0.15.x {#module-services-stalwart-upgrading}
 
