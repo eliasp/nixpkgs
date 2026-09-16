@@ -14,15 +14,20 @@ To enable Stalwart, add the following to your {file}`configuration.nix`:
   services.stalwart = {
     enable = true;
     package = pkgs.stalwart_0_16;
-    admin = {
+    recovery = {
       enable = true;
-      username = "admin";
+      admin = {
+        enable = true;
+        username = "admin";
+      };
     };
     url = "https://mail.example.com/";
     stateVersion = "26.11";
   };
 }
 ```
+
+Create the file `/run/credstore/admin` with a plain-text password for the initial recovery admin.
 
 Visit the public URL to sign in as the admin account and begin configuring your Stalwart instance.
 
@@ -64,9 +69,9 @@ To enable recovery mode:
 }
 ```
 Recovery mode disables many checks and features that could cause problems with using Stalwart,
-putting it into a state where you can use the {option}`services.stalwart.admin` account to fix it.
+putting it into a state where you can use the {option}`services.stalwart.recovery.admin` account to fix it.
 
-Do not use this in production.
+Do not use this in production!
 
 ## Declarative configuration {#module-services-stalwart-provision}
 

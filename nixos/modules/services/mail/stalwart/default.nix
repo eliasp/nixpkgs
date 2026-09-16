@@ -129,31 +129,30 @@ in
           See the Stalwart documentation on "[TracingLevel](https://stalw.art/docs/ref/object/log/#tracinglevel)" for details.
         '';
       };
-    };
+      admin = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Whether to enable the fallback administrator.
+          '';
+        };
+        username = lib.mkOption {
+          type = lib.types.str;
+          description = ''
+            The username of the fallback administrator used in recovery mode.
 
-    admin = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = ''
-          Whether to enable the fallback administrator.
-        '';
-      };
-      username = lib.mkOption {
-        type = lib.types.str;
-        description = ''
-          The username of the fallback administrator used with {option}`recovery.enable`.
+            For providing the user's password, a credential with an identifier matching the value of {option}`recovery.admin.username`
+            is required.
 
-          For providing the user's password, a credential with an identifier matching the value of {option}`admin.username`
-          is required.
-
-          For it to be automatically used, it can be provided through one of systemd's lookup locations for systemd-credentials,
-          e.g. by creating the file `/run/credstore/recovery_admin`, containing the user's plain-text password.
-          See {manpage}`systemd.exec(5)` (section "CREDENTIALS") and {option}`credentials` for details.
-          Alternatively, configure the corresponding credential with a custom source path explicitly via {option}`credentials`
-          and ensure its key matches {option}`username`.
-        '';
-        example = "recovery_admin";
+            For it to be automatically used, it can be provided through one of systemd's lookup locations for systemd-credentials,
+            e.g. by creating the file `/run/credstore/recovery_admin`, containing the user's plain-text password.
+            See {manpage}`systemd.exec(5)` (section "CREDENTIALS") and {option}`credentials` for details.
+            Alternatively, configure the corresponding credential with a custom source path explicitly via {option}`credentials`
+            and ensure its key matches the value of {option}`recovery.admin.username`.
+          '';
+          example = "recovery_admin";
+        };
       };
     };
 
@@ -195,8 +194,8 @@ in
         message = "<option>services.stalwart.recovery.enable</option> requires <option>services.stalwart.package</option> to be at least version 0.16";
       }
       {
-        assertion = cfg.admin.enable -> since0_16;
-        message = "<option>services.stalwart.admin.enable</option> requires <option>services.stalwart.package</option> to be at least version 0.16";
+        assertion = cfg.recovery.admin.enable -> since0_16;
+        message = "<option>services.stalwart.recovery.admin.enable</option> requires <option>services.stalwart.package</option> to be at least version 0.16";
       }
       {
         assertion =
@@ -333,11 +332,11 @@ in
               '';
           ExecStart =
             let
-              stalwartEnv = lib.optionalString cfg.admin.enable "STALWART_RECOVERY_ADMIN=${lib.escapeShellArg cfg.admin.username}:`systemd-creds cat ${lib.escapeShellArg cfg.admin.username}`";
+              stalwartEnv = lib.optionalString (cfg.recovery.enable && cfg.recovery.admin.enable) "STALWART_RECOVERY_ADMIN=${lib.escapeShellArg cfg.recovery.admin.username}:`systemd-creds cat ${lib.escapeShellArg cfg.recovery.admin.username}`";
               stalwartCmd = "${lib.getExe cfg.package} --config=${configFile}";
               cmd = lib.optionalString cfg.recovery.enable "${stalwartEnv} ${stalwartCmd}";
             in
-            if (since0_16 && cfg.admin.enable) then
+            if (since0_16 && cfg.recovery.enable && cfg.recovery.admin.enable) then
               "${lib.getExe pkgs.bash} -c ${lib.escapeShellArg cmd}"
             else
               stalwartCmd;
@@ -355,7 +354,7 @@ in
             let
               # default credentials for the admin user, might be overridden by an explicitly configured
               # cred in cfg.credentials
-              adminCreds = lib.optionalAttrs cfg.admin.enable { "${cfg.admin.username}" = cfg.admin.username; };
+              adminCreds = lib.optionalAttrs cfg.recovery.admin.enable { "${cfg.recovery.admin.username}" = cfg.recovery.admin.username; };
             in
           lib.mapAttrsToList (key: value: "${key}:${value}") ( adminCreds // cfg.credentials );
 
